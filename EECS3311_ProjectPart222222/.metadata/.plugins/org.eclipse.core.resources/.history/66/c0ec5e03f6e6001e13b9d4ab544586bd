@@ -1,0 +1,14 @@
+package project;
+
+
+public interface User {
+    void login(String email, String password);
+    void logout();
+    void rentItem(PhysicalItem physical);
+    void viewBorrowedItems();
+    void returnItem(PhysicalItem physical);
+    void purchaseItem(PhysicalItem physical);
+    PaymentManager getBalance();
+    void subscribeToNewsLetter();
+    void unsubscribeFromNewsletter();
+}

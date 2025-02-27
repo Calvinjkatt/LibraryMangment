@@ -1,0 +1,22 @@
+package project;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class Student extends User
+{
+	protected Student(String email, String password, UserType type)
+	{
+		super(email, password, type);
+	}
+	
+	Map<String, String> courseInfo = new HashMap<String, String>();
+	
+	public void addCourse(String courseName, String textbookName)
+	{
+		courseInfo.put(courseName, textbookName);
+	}
+	
+	//Need logic for adding a copy of the textbook to Student and removing it
+	//after the class ends
+}

@@ -1,0 +1,108 @@
+package project;
+
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
+
+public class FacultyMember extends User
+{
+	protected FacultyMember(String email, String password, UserType type) 
+	{
+		super(email, password, type);
+	}
+
+	Map<String, String> courseInfo = new HashMap<String, String>();
+	
+	OnlineBook courseTextbook;
+	
+	//A Mapping from course to textbook. 
+	//If there is no textbook in the course, then put null for textbook.
+	//EECS3311 -> "Dogs are Cute!"
+	
+	public void addCourse(String courseName, String textbookName)
+	{
+		courseInfo.put(courseName, textbookName);
+		
+		//If the course is given a textbook
+		if(!(textbookName == null))
+		{
+			courseTextbook = new OnlineBook(textbookName);
+		}
+		
+	}
+	
+	//Assuming you want to check if a course is in the course map.
+	public boolean checkCourse(String target) 
+	{
+		boolean check = courseInfo.containsKey(target);
+		
+		return check;
+	}
+	
+	//Returns true or false if there is a set course textbook.
+	public boolean checkIfCourseTextbook(String target)
+	{
+		boolean check = checkCourse(target);
+		
+		//Check to see if there is a textbook set for this course.
+		if(check && !(courseInfo.get(target) == null))
+		{
+			return true;
+		}
+		//If there is no textbook set for the course.
+		else 
+		{
+			return false;
+		}
+	}
+	
+	public void setCourseDeadline(String courseName, LocalDate courseEndDate)
+	{
+		if(checkCourse(courseName) && checkIfCourseTextbook(courseName))
+		{
+			courseTextbook.setCourseEndDate(courseEndDate);
+			System.out.println("Changed the course deadline.");
+		}
+		//If course was inputted but course textbook was not inputted.
+		else if(checkCourse(courseName) && !(checkIfCourseTextbook(courseName)))
+		{
+			System.out.println("This course has not added a textbook yet.");
+		}
+		else
+		{
+			System.out.println("This course is not listed.");
+		}
+	}
+	
+	public void getCourseDeadline(String courseName)
+	{
+		if(checkCourse(courseName) && checkIfCourseTextbook(courseName))
+		{
+			System.out.println("" + courseTextbook.getCourseEndDate());
+		}
+		//If course was inputted but course textbook was not inputted.
+		else if(checkCourse(courseName) && !(checkIfCourseTextbook(courseName)))
+		{
+			System.out.println("This course has not added a textbook yet.");
+		}
+		else
+		{
+			System.out.println("This course is not listed.");
+		}
+	}
+	
+	public static void main(String [] args)
+	{
+		FacultyMember Ryan = new FacultyMember("ryan", "As123!", UserType.FACULTY_MEMBER);
+		
+		Ryan.addCourse("Leadership 101", "How to Lead!");
+		
+		LocalDate today = LocalDate.now();
+		
+		Ryan.setCourseDeadline("Leadership 101", today);
+		
+		Ryan.getCourseDeadline("Leadership 101");
+	}
+	
+	
+}

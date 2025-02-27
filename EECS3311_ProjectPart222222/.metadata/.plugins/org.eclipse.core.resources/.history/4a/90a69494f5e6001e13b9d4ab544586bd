@@ -1,0 +1,361 @@
+package project;
+
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class User 
+{
+	public String email;
+	public String password;
+	public UserType type;
+	
+	private boolean loggedIn;
+	private PaymentManager balance;
+	
+	SystemDirectory directory;
+	
+	protected User()
+	{
+	}
+	
+	protected User(String email, String password, UserType type)
+	{
+		this.email = email;
+		this.password = password;
+		this.type = type;
+		
+		directory = new SystemDirectory();
+		balance = new PaymentManager();
+	}
+	
+	//Can change the system.outs to booleans that change.
+	public void login(String email, String password)
+	{
+		if(loggedIn)
+		{
+			System.out.println("You are already logged in.");
+			
+			UserManager.validateUser(this);
+			
+			return;
+		}
+		else if(this.email.equals(email) && this.password.equals(password))
+		{
+			System.out.println("You are now logged in.");
+			loggedIn = true;
+		}
+		else if(!this.email.equals(email) && !this.password.equals(password))
+		{
+			System.out.println("Your email and password was incorrect");
+		}
+		else if(!this.email.equals(email))
+		{
+			System.out.println("Your email was invalid");
+		}
+		else
+		{
+			System.out.println("Your password was incorrect");
+		}
+	}
+	
+	public void logout()
+	{
+		System.out.println("You are now logged out.");
+		loggedIn = false;
+	}
+	
+	//Can change the system.outs to booleans that change.
+	public void register()
+	{
+		if(this.email == null)
+		{
+			Scanner scanner = new Scanner(System.in);
+			
+			System.out.println("Please enter your email.");
+			
+			this.email = scanner.nextLine();
+			
+			System.out.println("Please enter your password.");
+			
+			String newPassword = scanner.nextLine();
+
+			if(!strongPasswordCheck(newPassword))
+			{
+				do
+				{
+					System.out.println("Your password was not considered strong enough.");
+					System.out.println("Please enter a new password.");
+					
+					newPassword = scanner.nextLine(); //Use a temporary variable each time.
+				}
+				while(!strongPasswordCheck(newPassword));
+			}
+			
+			this.password = newPassword; //Change the password.
+			
+			System.out.println("Please enter your account type.");
+			//Very specific for right now
+			System.out.println("Faculty_Member, Non_Faculty_Member, Student, or Visitor");
+			
+			String userType = scanner.nextLine();
+			
+			if(checkIfValidUserType(userType))
+			{
+				if(!checkIfVisitor(this.type)) //Only register user if they are not visitor
+				{
+					UserManager.registerUser(this);
+				}
+			}
+			else
+			{
+				do
+				{
+					System.out.println("Your user type was not of the four options.");
+					System.out.println("Please enter a valid user type.");
+					
+					userType = scanner.nextLine(); //Use a temporary variable each time.
+				}
+				while(!checkIfValidUserType(userType));
+				
+				if(!checkIfVisitor(this.type)) //Only register user if they are not visitor
+				{
+					UserManager.registerUser(this);
+				}
+			}
+			
+			scanner.close();
+			
+			System.out.println("You have successfully registered an account.");
+		}
+		else if(this.email.equals(email))
+		{
+			System.out.println("You already have an account with this email.");
+		}
+	}
+	
+	public boolean strongPasswordCheck(String password)
+	{
+		boolean hasUpperCase = false;
+		boolean hasLowerCase = false;
+		boolean hasNumber = false;
+		boolean hasSpecial = false;
+		
+		for(char character : password.toCharArray())
+		{
+			if(Character.isUpperCase(character))
+			{
+				hasUpperCase = true;
+			}
+			else if(Character.isLowerCase(character))
+			{
+				hasLowerCase = true;
+			}
+			else if(Character.isDigit(character))
+			{
+				hasNumber = true;
+			}
+			else
+			{
+				hasSpecial = true;
+			}
+		}
+		
+		return (hasUpperCase && hasLowerCase && hasNumber && hasSpecial);
+	}
+	
+	//Can the user put in the newPassword as the current password?
+	//Can change the system.outs to booleans that change.
+	public void changePassword(String newPassword)
+	{
+		Scanner scanner = new Scanner(System.in);
+		
+		if(loggedIn)
+		{
+			if(strongPasswordCheck(newPassword))
+			{
+				this.password = newPassword;
+				
+				System.out.println("You have successfully changed your password.");
+			}
+			else //Weak password
+			{
+				do
+				{
+					System.out.println("Your password was not considered strong enough.");
+					System.out.println("Please enter a new password.");
+					
+					newPassword = scanner.nextLine(); //Changes the newPassword to the newest password.
+				}
+				while(!strongPasswordCheck(newPassword));
+				
+				this.password = newPassword; //Change the password.
+				
+				System.out.println("You have successfully changed your password.");
+			}
+		}
+		else
+		{
+			System.out.println("You are not logged in.");
+		}
+		
+		scanner.close();
+	}
+	
+	public boolean checkIfValidUserType(String userType)
+	{
+		for(UserType userTypeEnum : UserType.values())
+		{
+			//Check to see if the given String is one of the four user types.
+			if(userTypeEnum.name().equals(userType.toUpperCase())) 
+			{
+				this.type = userTypeEnum;
+				
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	//Quickly check if the user needs more validation and authentication.
+	public boolean checkIfVisitor(UserType type)
+	{
+		if(type == UserType.VISITOR)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	
+	//Using observer pattern here?
+	public void loginVisitor()
+	{
+		
+	}
+	
+	//User rents an item if item is known.
+	public void rentItem(PhysicalItem physical)
+	{
+		if(checkIfVisitor(this.type))
+		{
+			System.out.println("Sorry you are a visitor. You are not able to return items.");
+		}
+		else
+		{
+			BorrowPhysical.borrowItem(directory, physical, this);
+		}
+	}
+	
+	//May need to be loggedIn and not visitor for this to apply.
+	public void viewBorrowedItems() 
+	{
+		ArrayList<PhysicalItem> rentedItems = directory.getPhysicalRented();
+		
+		if (rentedItems.isEmpty()) 
+		{
+			System.out.println("You haven't borrowed any items.");
+		} 
+		else 
+		{
+			System.out.println("List of borrowed items:");
+			
+			for (PhysicalItem item : rentedItems) 
+			{
+				System.out.println("Title: " + item.getTitle());
+				System.out.println("Location: " + item.getLocation());
+				System.out.println("Rent Date: " + item.getRentDate());
+				System.out.println("Due Date: " + item.getDueDate());
+				System.out.println("------------------------------------");
+			}
+		}
+	}
+
+	//User returns an item if item is known.
+	public void returnItem(PhysicalItem physical)
+	{
+		if(checkIfVisitor(this.type))
+		{
+			System.out.println("Sorry you are a visitor. You are not able to return items.");
+		}
+		else
+		{
+			BorrowPhysical.returnItem(directory, physical, this);
+		}
+	}
+	
+	//User purchases an item if item is known.
+	public void purchaseItem(PhysicalItem physical)
+	{
+		if(checkIfVisitor(this.type))
+		{
+			System.out.println("Sorry you are a visitor. You are not able to purchase items.");
+		}
+		else
+		{
+			PurchasePhysical.purchase(physical, this);
+		}
+	}
+
+	public PaymentManager getBalance() 
+	{
+		return balance;
+	}
+	
+	public void subscribeToNewsLetter()
+	{
+		if(loggedIn)
+		{
+			Scanner scanner = new Scanner(System.in);
+			
+			System.out.println("Enter your email to subscribe to the newsletter:");
+			String userEmail = scanner.nextLine();
+			
+			scanner.close();
+			
+			//Need to check that the user email is the email stored in the database.
+			
+			Subscription subscription = new Subscription(userEmail);
+			
+			subscription.subscribe();
+			
+			System.out.println("Subscription request sent successfully!");
+		}
+		else
+		{
+			System.out.println("You must be logged in to subscribe to the newsletter.");
+		}
+	}
+	
+	public void unsubscribeFromNewsletter()
+	{
+		if(loggedIn)
+		{
+			Scanner scanner = new Scanner(System.in);
+			
+			System.out.println("Enter your email to subscribe to the newsletter:");
+			String userEmail = scanner.nextLine();
+			
+			scanner.close();
+			
+			Subscription subscription = new Subscription(userEmail);
+			
+			subscription.unsubscribe();
+			
+			if(subscription.isSubscribed())
+			{
+				subscription.accessNewYorkTimes();
+			}
+			
+			System.out.println("Unsubscritpion request sent successfully");
+		}
+		else
+		{
+			System.out.println("You must be logged in to unsubscribe to the newsletter.");
+		}
+	}
+	
+	//Need methods for search, view books, view online book, subscribe, ...
+}
